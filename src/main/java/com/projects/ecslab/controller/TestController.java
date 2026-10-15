@@ -11,4 +11,19 @@ public class TestController {
     public String test(){
         return "Hello! Amazon ECS Fargate Test";
     }
+
+    @GetMapping("/public")
+    public String publicEndpoint() {
+        return "Public";
+    }
+
+    @GetMapping("/member")
+    public String memberEndpoint() {
+        return "Member";
+    }
+
+    @GetMapping("/admin")
+    public String adminEndpoint() {
+        return "Admin";
+    }
 }
