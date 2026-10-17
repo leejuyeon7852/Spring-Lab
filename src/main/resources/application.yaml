@@ -1,3 +1,17 @@
 spring:
   application:
     name: ecs-lab
+
+  datasource:
+    url: jdbc:mysql://localhost:3307/spring_lab
+    username: user
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
