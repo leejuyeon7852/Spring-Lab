@@ -1,15 +1,15 @@
 package com.projects.ecslab.member.service;
 
+import com.projects.ecslab.global.dto.ResponseCode;
+import com.projects.ecslab.global.exception.BusinessException;
 import com.projects.ecslab.member.dto.MemberResponse;
 import com.projects.ecslab.member.dto.SignupRequest;
 import com.projects.ecslab.member.entity.Member;
 import com.projects.ecslab.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -19,11 +19,8 @@ public class MemberService {
 
     @Transactional
     public MemberResponse signup(SignupRequest request){
-        if(memberRepository.existsByUsername(request.username())){
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "이미 사용 중인 아이디입니다."
-            );
+        if (memberRepository.existsByUsername(request.username())) {
+            throw new BusinessException(ResponseCode.DUPLICATE_USERNAME);
         }
 
         Member member = Member.builder()
