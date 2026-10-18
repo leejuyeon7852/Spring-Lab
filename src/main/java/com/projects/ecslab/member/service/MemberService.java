@@ -1,5 +1,6 @@
 package com.projects.ecslab.member.service;
 
+import com.projects.ecslab.member.dto.MemberResponse;
 import com.projects.ecslab.member.dto.SignupRequest;
 import com.projects.ecslab.member.entity.Member;
 import com.projects.ecslab.member.repository.MemberRepository;
@@ -17,7 +18,7 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public void signup(SignupRequest request){
+    public MemberResponse signup(SignupRequest request){
         if(memberRepository.existsByUsername(request.username())){
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -31,5 +32,9 @@ public class MemberService {
                 .build();
 
         memberRepository.save(member);
+
+        MemberResponse response = MemberResponse.from(member);
+
+        return response;
     }
 }

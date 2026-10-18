@@ -1,9 +1,14 @@
 package com.projects.ecslab.member.controller;
 
+import com.projects.ecslab.global.dto.BaseResponse;
+import com.projects.ecslab.global.dto.ResponseCode;
+import com.projects.ecslab.member.dto.MemberResponse;
 import com.projects.ecslab.member.dto.SignupRequest;
 import com.projects.ecslab.member.service.MemberService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,7 +20,11 @@ public class MemberController {
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
-    public void signup(@RequestBody SignupRequest request) {
-        memberService.signup(request);
+    public ResponseEntity<BaseResponse<MemberResponse>> signup(@Valid @RequestBody SignupRequest request) {
+        MemberResponse response = memberService.signup(request);
+
+        return ResponseEntity
+                .status(ResponseCode.MEMBER_CREATED.httpStatus())
+                .body(BaseResponse.success(ResponseCode.MEMBER_CREATED, response));
     }
 }
