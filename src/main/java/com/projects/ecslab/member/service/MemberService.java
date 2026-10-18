@@ -2,7 +2,9 @@ package com.projects.ecslab.member.service;
 
 import com.projects.ecslab.global.dto.ResponseCode;
 import com.projects.ecslab.global.exception.BusinessException;
+import com.projects.ecslab.global.jwt.JwtTokenProvider;
 import com.projects.ecslab.member.dto.LoginRequest;
+import com.projects.ecslab.member.dto.LoginResponse;
 import com.projects.ecslab.member.dto.MemberResponse;
 import com.projects.ecslab.member.dto.SignupRequest;
 import com.projects.ecslab.member.entity.Member;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Transactional
     public MemberResponse signup(SignupRequest request){
@@ -37,7 +40,7 @@ public class MemberService {
     }
 
     @Transactional
-    public MemberResponse login(LoginRequest request){
+    public LoginResponse login(LoginRequest request){
         Member member = memberRepository.findByUsername(request.username())
                 .orElseThrow(() -> new BusinessException(ResponseCode.INVALID_CREDENTIALS));
 
@@ -45,6 +48,9 @@ public class MemberService {
             throw new BusinessException(ResponseCode.INVALID_CREDENTIALS);
         }
 
-        return MemberResponse.from(member);
+        return new LoginResponse(
+                jwtTokenProvider.createAccessToken(member.getId()),
+                jwtTokenProvider.createRefreshToken(member.getId())
+        );
     }
 }

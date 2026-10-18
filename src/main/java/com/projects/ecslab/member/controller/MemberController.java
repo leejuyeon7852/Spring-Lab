@@ -3,6 +3,7 @@ package com.projects.ecslab.member.controller;
 import com.projects.ecslab.global.dto.BaseResponse;
 import com.projects.ecslab.global.dto.ResponseCode;
 import com.projects.ecslab.member.dto.LoginRequest;
+import com.projects.ecslab.member.dto.LoginResponse;
 import com.projects.ecslab.member.dto.MemberResponse;
 import com.projects.ecslab.member.dto.SignupRequest;
 import com.projects.ecslab.member.service.MemberService;
@@ -29,8 +30,8 @@ public class MemberController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<BaseResponse<MemberResponse>> login(@Valid @RequestBody LoginRequest request){
-        MemberResponse response = memberService.login(request);
+    public ResponseEntity<BaseResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request){
+        LoginResponse response = memberService.login(request);
 
         return ResponseEntity
                 .status(ResponseCode.LOGIN_SUCCESS.httpStatus())
