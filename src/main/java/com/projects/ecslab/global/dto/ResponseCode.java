@@ -12,6 +12,14 @@ public enum ResponseCode {
             HttpStatus.CONFLICT,
             "이미 사용 중인 아이디입니다."
     ),
+    LOGIN_SUCCESS(
+            HttpStatus.OK,
+            "로그인에 성공했습니다."
+    ),
+    INVALID_CREDENTIALS(
+            HttpStatus.UNAUTHORIZED,
+            "아이디 또는 비밀번호가 올바르지 않습니다."
+    ),
     INVALID_REQUEST(
             HttpStatus.BAD_REQUEST,
             "잘못된 요청입니다."),

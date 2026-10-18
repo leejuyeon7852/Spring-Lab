@@ -42,11 +42,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         http
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/members/signup")
+                        .ignoringRequestMatchers("/api/members/signup", "/api/members/login")
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                HttpMethod.POST, "/api/members/signup"
+                                HttpMethod.POST, "/api/members/**"
                         ).permitAll()
                         .requestMatchers(
                                 "/swagger-ui.html",

@@ -2,6 +2,7 @@ package com.projects.ecslab.member.service;
 
 import com.projects.ecslab.global.dto.ResponseCode;
 import com.projects.ecslab.global.exception.BusinessException;
+import com.projects.ecslab.member.dto.LoginRequest;
 import com.projects.ecslab.member.dto.MemberResponse;
 import com.projects.ecslab.member.dto.SignupRequest;
 import com.projects.ecslab.member.entity.Member;
@@ -33,5 +34,17 @@ public class MemberService {
         MemberResponse response = MemberResponse.from(member);
 
         return response;
+    }
+
+    @Transactional
+    public MemberResponse login(LoginRequest request){
+        Member member = memberRepository.findByUsername(request.username())
+                .orElseThrow(() -> new BusinessException(ResponseCode.INVALID_CREDENTIALS));
+
+        if(!passwordEncoder.matches(request.password(), member.getPassword())){
+            throw new BusinessException(ResponseCode.INVALID_CREDENTIALS);
+        }
+
+        return MemberResponse.from(member);
     }
 }
