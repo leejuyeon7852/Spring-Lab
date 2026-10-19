@@ -8,11 +8,19 @@ import com.projects.ecslab.member.dto.LoginResponse;
 import com.projects.ecslab.member.dto.MemberResponse;
 import com.projects.ecslab.member.dto.SignupRequest;
 import com.projects.ecslab.member.entity.Member;
+import com.projects.ecslab.member.entity.RefreshToken;
 import com.projects.ecslab.member.repository.MemberRepository;
+import com.projects.ecslab.member.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
+import java.util.HexFormat;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +28,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Transactional
     public MemberResponse signup(SignupRequest request){
@@ -48,9 +57,40 @@ public class MemberService {
             throw new BusinessException(ResponseCode.INVALID_CREDENTIALS);
         }
 
-        return new LoginResponse(
-                jwtTokenProvider.createAccessToken(member.getId()),
-                jwtTokenProvider.createRefreshToken(member.getId())
-        );
+        String accessToken = jwtTokenProvider.createAccessToken(member.getId());
+        String refreshToken = jwtTokenProvider.createRefreshToken(member.getId());
+
+        String tokenHash = hashToken(refreshToken);
+        Instant expireAt = jwtTokenProvider.getExpiration(refreshToken);
+
+        RefreshToken savedToken = refreshTokenRepository
+                .findByMember_Id(member.getId())
+                .orElse(null);
+
+        if(savedToken == null){
+            refreshTokenRepository.save(
+                    new RefreshToken(member, tokenHash, expireAt)
+            );
+        } else {
+            savedToken.rotate(tokenHash, expireAt);
+        }
+
+        return new LoginResponse(accessToken, refreshToken);
+    }
+
+    // refresh token 해시 생성
+    private String hashToken(String token){
+        try{
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(
+                    token.getBytes(StandardCharsets.UTF_8)
+            );
+
+            return HexFormat.of().formatHex(hash);
+        }catch (NoSuchAlgorithmException exception){
+            throw new IllegalStateException(
+                    "SHA-256 알고리즘을 사용할 수 없습니다.", exception
+            );
+        }
     }
 }

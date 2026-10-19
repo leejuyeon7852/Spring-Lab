@@ -68,4 +68,15 @@ public class JwtTokenProvider {
 
         return Long.valueOf(claims.getSubject());
     }
+
+    // 만료시간
+    public Instant getExpiration(String token){
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getExpiration()
+                .toInstant();
+    }
 }
