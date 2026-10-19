@@ -3,6 +3,8 @@ package com.projects.ecslab.global.exception;
 
 import com.projects.ecslab.global.dto.BaseResponse;
 import com.projects.ecslab.global.dto.ResponseCode;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -12,6 +14,18 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<BaseResponse<Void>> handleJwtException(
+            JwtException exception
+    ) {
+        ResponseCode code = exception instanceof ExpiredJwtException
+                ? ResponseCode.EXPIRED_TOKEN
+                : ResponseCode.INVALID_TOKEN;
+
+        return ResponseEntity.status(code.httpStatus())
+                .body(BaseResponse.failure(code));
+    }
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<BaseResponse<Void>> handleBusinessException(

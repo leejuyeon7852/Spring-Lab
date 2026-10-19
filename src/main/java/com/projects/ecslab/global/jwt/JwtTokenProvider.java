@@ -66,7 +66,11 @@ public class JwtTokenProvider {
             throw new JwtException("토큰 용도가 올바르지 않습니다");
         }
 
-        return Long.valueOf(claims.getSubject());
+        try {
+            return Long.valueOf(claims.getSubject());
+        } catch (NumberFormatException exception) {
+            throw new JwtException("토큰의 회원 ID가 올바르지 않습니다.", exception);
+        }
     }
 
     // 만료시간

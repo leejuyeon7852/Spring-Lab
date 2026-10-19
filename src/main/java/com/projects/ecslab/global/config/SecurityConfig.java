@@ -38,7 +38,10 @@ public class SecurityConfig {
     ) throws Exception{
         http
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/members/signup", "/api/members/login")
+                        .ignoringRequestMatchers(
+                                "/api/members/signup", "/api/members/login",
+                                "/api/members/refresh"
+                        )
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(

@@ -3,10 +3,7 @@ package com.projects.ecslab.member.service;
 import com.projects.ecslab.global.dto.ResponseCode;
 import com.projects.ecslab.global.exception.BusinessException;
 import com.projects.ecslab.global.jwt.JwtTokenProvider;
-import com.projects.ecslab.member.dto.LoginRequest;
-import com.projects.ecslab.member.dto.LoginResponse;
-import com.projects.ecslab.member.dto.MemberResponse;
-import com.projects.ecslab.member.dto.SignupRequest;
+import com.projects.ecslab.member.dto.*;
 import com.projects.ecslab.member.entity.Member;
 import com.projects.ecslab.member.entity.RefreshToken;
 import com.projects.ecslab.member.repository.MemberRepository;
@@ -74,6 +71,37 @@ public class MemberService {
         } else {
             savedToken.rotate(tokenHash, expireAt);
         }
+
+        return new LoginResponse(accessToken, refreshToken);
+    }
+
+    @Transactional
+    public LoginResponse refresh(RefreshRequest request){
+        // Refresh Token 검증
+        Long memberId = jwtTokenProvider.getMemberId(
+                request.refreshToken(), "refresh"
+        );
+
+        // memberId로 저장된 RefreshToken 조회
+        RefreshToken savedToken = refreshTokenRepository
+                .findByMember_Id(memberId)
+                .orElseThrow(() -> new BusinessException(ResponseCode.INVALID_TOKEN));
+
+        // 받은 토큰 hash
+        String tokenHash = hashToken(request.refreshToken());
+        if(!savedToken.getTokenHash().equals(tokenHash)){
+            throw new BusinessException(ResponseCode.INVALID_TOKEN);
+        }
+
+        // 새 accessToken, refresh Token 발급
+        String accessToken = jwtTokenProvider.createAccessToken(memberId);
+        String refreshToken = jwtTokenProvider.createRefreshToken(memberId);
+
+        // 교체
+        savedToken.rotate(
+                hashToken(refreshToken),
+                jwtTokenProvider.getExpiration(refreshToken)
+        );
 
         return new LoginResponse(accessToken, refreshToken);
     }

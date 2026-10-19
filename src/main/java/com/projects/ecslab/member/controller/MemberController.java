@@ -2,10 +2,9 @@ package com.projects.ecslab.member.controller;
 
 import com.projects.ecslab.global.dto.BaseResponse;
 import com.projects.ecslab.global.dto.ResponseCode;
-import com.projects.ecslab.member.dto.LoginRequest;
-import com.projects.ecslab.member.dto.LoginResponse;
-import com.projects.ecslab.member.dto.MemberResponse;
-import com.projects.ecslab.member.dto.SignupRequest;
+import com.projects.ecslab.member.dto.*;
+import com.projects.ecslab.member.entity.RefreshToken;
+import com.projects.ecslab.member.repository.MemberRepository;
 import com.projects.ecslab.member.service.MemberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController {
 
     private final MemberService memberService;
+    private final MemberRepository memberRepository;
 
     @PostMapping("/signup")
     public ResponseEntity<BaseResponse<MemberResponse>> signup(@Valid @RequestBody SignupRequest request) {
@@ -36,5 +36,14 @@ public class MemberController {
         return ResponseEntity
                 .status(ResponseCode.LOGIN_SUCCESS.httpStatus())
                 .body(BaseResponse.success(ResponseCode.LOGIN_SUCCESS, response));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<BaseResponse<LoginResponse>> refreshToken(@Valid @RequestBody RefreshRequest request){
+        LoginResponse response = memberService.refresh(request);
+
+        return ResponseEntity
+                .status(ResponseCode.TOKEN_REFRESHED.httpStatus())
+                .body(BaseResponse.success(ResponseCode.TOKEN_REFRESHED, response));
     }
 }

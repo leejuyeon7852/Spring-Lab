@@ -32,6 +32,10 @@ public enum ResponseCode {
             HttpStatus.UNAUTHORIZED,
             "만료된 토큰입니다."
     ),
+    TOKEN_REFRESHED(
+            HttpStatus.OK,
+            "토큰이 재발급되었습니다."
+    ),
     AUTHENTICATION_REQUIRED(
             HttpStatus.UNAUTHORIZED,
             "인증이 필요합니다."

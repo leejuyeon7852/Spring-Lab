@@ -4,7 +4,6 @@ import com.projects.ecslab.global.dto.ResponseCode;
 import com.projects.ecslab.global.exception.BusinessException;
 import com.projects.ecslab.member.entity.Member;
 import com.projects.ecslab.member.repository.MemberRepository;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -85,18 +84,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     request, response, null, exception
             );
             return;
-        } catch (JwtException | IllegalArgumentException exception) {
+        } catch (JwtException exception) {
             SecurityContextHolder.clearContext();
 
-            ResponseCode code = exception instanceof ExpiredJwtException
-                    ? ResponseCode.EXPIRED_TOKEN
-                    : ResponseCode.INVALID_TOKEN;
+            exceptionResolver.resolveException(
+                    request, response, null, exception
+            );
+            return;
+        } catch (IllegalArgumentException exception) {
+            SecurityContextHolder.clearContext();
 
             exceptionResolver.resolveException(
                     request,
                     response,
                     null,
-                    new BusinessException(code)
+                    new BusinessException(ResponseCode.INVALID_TOKEN)
             );
             return;
         }
