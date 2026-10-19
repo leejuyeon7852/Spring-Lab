@@ -1,5 +1,7 @@
 package com.projects.ecslab.global.jwt;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -50,5 +52,20 @@ public class JwtTokenProvider {
                 .expiration(Date.from(now.plusMillis(expirationMillis)))
                 .signWith(secretKey, Jwts.SIG.HS256)
                 .compact();
+    }
+
+    // 토큰 검증
+    public Long getMemberId(String token, String expectedTokenType){
+        Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        if(!expectedTokenType.equals(claims.get("tokenType", String.class))){
+            throw new JwtException("토큰 용도가 올바르지 않습니다");
+        }
+
+        return Long.valueOf(claims.getSubject());
     }
 }
