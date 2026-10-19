@@ -1,5 +1,6 @@
 package com.projects.ecslab.member.entity;
 
+import com.projects.ecslab.member.dto.Role;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -21,9 +22,14 @@ public class Member {
     @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
     @Builder
     private Member(String username, String password) {
         this.username = username;
         this.password = password;
+        this.role = Role.USER;
     }
 }

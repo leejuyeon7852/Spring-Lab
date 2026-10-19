@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -66,7 +67,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 인증정보 생성
             Authentication authentication =
                     UsernamePasswordAuthenticationToken.authenticated(
-                            member.getId(), null, List.of()
+                            member.getId(), null,
+                            List.of(
+                                    new SimpleGrantedAuthority("ROLE_" + member.getRole().name())
+                            )
                     );
 
             // 인증 정보 등록
