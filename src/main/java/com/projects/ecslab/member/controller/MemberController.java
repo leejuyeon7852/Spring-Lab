@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -45,5 +46,18 @@ public class MemberController {
         return ResponseEntity
                 .status(ResponseCode.TOKEN_REFRESHED.httpStatus())
                 .body(BaseResponse.success(ResponseCode.TOKEN_REFRESHED, response));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<BaseResponse<Void>> logout(
+            @AuthenticationPrincipal Long memberId
+    ) {
+        memberService.logout(memberId);
+
+        return ResponseEntity
+                .status(ResponseCode.LOGOUT_SUCCESS.httpStatus())
+                .body(BaseResponse.<Void>success(
+                        ResponseCode.LOGOUT_SUCCESS, null
+                ));
     }
 }

@@ -37,15 +37,11 @@ public class SecurityConfig {
             HandlerExceptionResolver exceptionResolver
     ) throws Exception{
         http
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers(
-                                "/api/members/signup", "/api/members/login",
-                                "/api/members/refresh"
-                        )
-                )
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                HttpMethod.POST, "/api/members/**"
+                                HttpMethod.POST, "/api/members/signup", "/api/members/login",
+                                "/api/members/refresh"
                         ).permitAll()
                         .requestMatchers(
                                 "/swagger-ui.html",

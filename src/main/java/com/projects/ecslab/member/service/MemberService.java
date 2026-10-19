@@ -106,6 +106,11 @@ public class MemberService {
         return new LoginResponse(accessToken, refreshToken);
     }
 
+    @Transactional
+    public void logout(Long memberId){
+        refreshTokenRepository.deleteByMember_Id(memberId);
+    }
+
     // refresh token 해시 생성
     private String hashToken(String token){
         try{
