@@ -48,6 +48,10 @@ public enum ResponseCode {
             HttpStatus.FORBIDDEN,
             "접근 권한이 없습니다."
     ),
+    ADMIN_MESSAGE_FETCHED(
+            HttpStatus.OK,
+            "관리자 메시지를 조회했습니다."
+    ),
     INVALID_REQUEST(
             HttpStatus.BAD_REQUEST,
             "잘못된 요청입니다."),
