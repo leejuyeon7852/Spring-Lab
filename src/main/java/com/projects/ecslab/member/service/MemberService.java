@@ -9,6 +9,10 @@ import com.projects.ecslab.member.entity.RefreshToken;
 import com.projects.ecslab.member.repository.MemberRepository;
 import com.projects.ecslab.member.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +30,7 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final AuthenticationManager authenticationManager;
 
     @Transactional
     public MemberResponse signup(SignupRequest request){
@@ -47,12 +52,20 @@ public class MemberService {
 
     @Transactional
     public LoginResponse login(LoginRequest request){
-        Member member = memberRepository.findByUsername(request.username())
-                .orElseThrow(() -> new BusinessException(ResponseCode.INVALID_CREDENTIALS));
-
-        if(!passwordEncoder.matches(request.password(), member.getPassword())){
+        Authentication authentication;
+        try{
+            authentication = authenticationManager.authenticate(
+                    UsernamePasswordAuthenticationToken.unauthenticated(
+                            request.username(),
+                            request.password()
+                    )
+            );
+        }catch(BadCredentialsException exception){
             throw new BusinessException(ResponseCode.INVALID_CREDENTIALS);
         }
+
+        Member member = memberRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new BusinessException(ResponseCode.INVALID_CREDENTIALS));
 
         String accessToken = jwtTokenProvider.createAccessToken(member.getId());
         String refreshToken = jwtTokenProvider.createRefreshToken(member.getId());
