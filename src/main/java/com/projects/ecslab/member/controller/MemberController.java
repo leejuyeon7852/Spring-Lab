@@ -5,6 +5,7 @@ import com.projects.ecslab.global.dto.ResponseCode;
 import com.projects.ecslab.member.dto.*;
 import com.projects.ecslab.member.entity.RefreshToken;
 import com.projects.ecslab.member.repository.MemberRepository;
+import com.projects.ecslab.member.service.AdminService;
 import com.projects.ecslab.member.service.MemberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController {
 
     private final MemberService memberService;
-    private final MemberRepository memberRepository;
+    private final AdminService adminService;
 
     @PostMapping("/signup")
     public ResponseEntity<BaseResponse<MemberResponse>> signup(@Valid @RequestBody SignupRequest request) {
@@ -58,6 +59,17 @@ public class MemberController {
                 .status(ResponseCode.LOGOUT_SUCCESS.httpStatus())
                 .body(BaseResponse.<Void>success(
                         ResponseCode.LOGOUT_SUCCESS, null
+                ));
+    }
+
+    @GetMapping("/admin-message")
+    public ResponseEntity<BaseResponse<String>> getAdminMessage() {
+        String response = adminService.getAdminMessage();
+
+        return ResponseEntity
+                .status(ResponseCode.ADMIN_MESSAGE_FETCHED.httpStatus())
+                .body(BaseResponse.success(
+                        ResponseCode.ADMIN_MESSAGE_FETCHED, response
                 ));
     }
 }
