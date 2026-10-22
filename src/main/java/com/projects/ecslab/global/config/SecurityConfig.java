@@ -4,7 +4,10 @@ import com.projects.ecslab.global.dto.ResponseCode;
 import com.projects.ecslab.global.exception.BusinessException;
 import com.projects.ecslab.global.jwt.JwtAuthenticationFilter;
 import com.projects.ecslab.global.jwt.JwtTokenProvider;
+import com.projects.ecslab.member.dto.AuthProvider;
+import com.projects.ecslab.member.entity.Member;
 import com.projects.ecslab.member.repository.MemberRepository;
+import com.projects.ecslab.member.service.SocialMemberService;
 import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +23,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
@@ -61,7 +65,8 @@ public class SecurityConfig {
             JwtTokenProvider jwtTokenProvider,
             MemberRepository memberRepository,
             @Qualifier("handlerExceptionResolver")
-            HandlerExceptionResolver exceptionResolver
+            HandlerExceptionResolver exceptionResolver,
+            SocialMemberService socialMemberService
     ) throws Exception{
         http
                 .csrf(csrf -> csrf.disable())
@@ -93,8 +98,16 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler((request, response, authentication) -> {
+                            OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
+
+                            Member member = socialMemberService.findOrCreate(
+                                    AuthProvider.GOOGLE,
+                                    oidcUser.getSubject(),
+                                    oidcUser.getEmail()
+                            );
+
                             response.setContentType("text/plain;charset=UTF-8");
-                            response.getWriter().write("구글 로그인 성공");
+                            response.getWriter().write("구글 로그인 성공, 회원 ID: "+member.getId());
                         }))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

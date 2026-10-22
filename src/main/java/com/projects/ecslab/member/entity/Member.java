@@ -1,5 +1,6 @@
 package com.projects.ecslab.member.entity;
 
+import com.projects.ecslab.member.dto.AuthProvider;
 import com.projects.ecslab.member.dto.Role;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -8,6 +9,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_member_provider_provider_id",
+                        columnNames = {"provider", "provider_id"}
+                )
+        }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
@@ -16,20 +25,39 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String username;
 
-    @Column(nullable = false)
+    @Column
     private String password;
+
+    @Column
+    private String email;
+
+    @Column
+    private String providerId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AuthProvider provider;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
     @Builder
-    private Member(String username, String password) {
+    private Member(
+            String username,
+            String password,
+            String email,
+            AuthProvider provider,
+            String providerId
+    ) {
         this.username = username;
         this.password = password;
+        this.email = email;
+        this.provider = provider;
+        this.providerId = providerId;
         this.role = Role.USER;
     }
 }

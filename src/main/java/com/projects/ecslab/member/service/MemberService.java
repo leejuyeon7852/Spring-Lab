@@ -41,6 +41,7 @@ public class MemberService {
         Member member = Member.builder()
                 .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
+                .provider(AuthProvider.LOCAL)
                 .build();
 
         memberRepository.save(member);
