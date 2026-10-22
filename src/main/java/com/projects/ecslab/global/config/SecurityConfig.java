@@ -78,6 +78,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/public").permitAll()
                         .requestMatchers("/api/member").authenticated()
                         .requestMatchers("/api/admin").hasRole("ADMIN")
+                        .requestMatchers("/oauth2/**", "/login/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
@@ -90,6 +91,11 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler((request, response, authentication) -> {
+                            response.setContentType("text/plain;charset=UTF-8");
+                            response.getWriter().write("구글 로그인 성공");
+                        }))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
