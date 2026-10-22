@@ -31,6 +31,7 @@ public class MemberService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
     private final AuthenticationManager authenticationManager;
+    private final TokenService tokenService;
 
     @Transactional
     public MemberResponse signup(SignupRequest request){
@@ -65,28 +66,11 @@ public class MemberService {
             throw new BusinessException(ResponseCode.INVALID_CREDENTIALS);
         }
 
-        Member member = memberRepository.findByUsername(authentication.getName())
+        Member member = memberRepository
+                .findByUsername(authentication.getName())
                 .orElseThrow(() -> new BusinessException(ResponseCode.INVALID_CREDENTIALS));
 
-        String accessToken = jwtTokenProvider.createAccessToken(member.getId());
-        String refreshToken = jwtTokenProvider.createRefreshToken(member.getId());
-
-        String tokenHash = hashToken(refreshToken);
-        Instant expireAt = jwtTokenProvider.getExpiration(refreshToken);
-
-        RefreshToken savedToken = refreshTokenRepository
-                .findByMember_Id(member.getId())
-                .orElse(null);
-
-        if(savedToken == null){
-            refreshTokenRepository.save(
-                    new RefreshToken(member, tokenHash, expireAt)
-            );
-        } else {
-            savedToken.rotate(tokenHash, expireAt);
-        }
-
-        return new LoginResponse(accessToken, refreshToken);
+        return tokenService.issue(member);
     }
 
     @Transactional
@@ -102,7 +86,7 @@ public class MemberService {
                 .orElseThrow(() -> new BusinessException(ResponseCode.INVALID_TOKEN));
 
         // 받은 토큰 hash
-        String tokenHash = hashToken(request.refreshToken());
+        String tokenHash = tokenService.hashToken(request.refreshToken());
         if(!savedToken.getTokenHash().equals(tokenHash)){
             throw new BusinessException(ResponseCode.INVALID_TOKEN);
         }
@@ -113,7 +97,7 @@ public class MemberService {
 
         // 교체
         savedToken.rotate(
-                hashToken(refreshToken),
+                tokenService.hashToken(refreshToken),
                 jwtTokenProvider.getExpiration(refreshToken)
         );
 
@@ -125,19 +109,4 @@ public class MemberService {
         refreshTokenRepository.deleteByMember_Id(memberId);
     }
 
-    // refresh token 해시 생성
-    private String hashToken(String token){
-        try{
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(
-                    token.getBytes(StandardCharsets.UTF_8)
-            );
-
-            return HexFormat.of().formatHex(hash);
-        }catch (NoSuchAlgorithmException exception){
-            throw new IllegalStateException(
-                    "SHA-256 알고리즘을 사용할 수 없습니다.", exception
-            );
-        }
-    }
 }

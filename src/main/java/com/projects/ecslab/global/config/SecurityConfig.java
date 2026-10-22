@@ -5,9 +5,11 @@ import com.projects.ecslab.global.exception.BusinessException;
 import com.projects.ecslab.global.jwt.JwtAuthenticationFilter;
 import com.projects.ecslab.global.jwt.JwtTokenProvider;
 import com.projects.ecslab.member.dto.AuthProvider;
+import com.projects.ecslab.member.dto.LoginResponse;
 import com.projects.ecslab.member.entity.Member;
 import com.projects.ecslab.member.repository.MemberRepository;
 import com.projects.ecslab.member.service.SocialMemberService;
+import com.projects.ecslab.member.service.TokenService;
 import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -66,7 +68,8 @@ public class SecurityConfig {
             MemberRepository memberRepository,
             @Qualifier("handlerExceptionResolver")
             HandlerExceptionResolver exceptionResolver,
-            SocialMemberService socialMemberService
+            SocialMemberService socialMemberService,
+            TokenService tokenService
     ) throws Exception{
         http
                 .csrf(csrf -> csrf.disable())
@@ -106,8 +109,21 @@ public class SecurityConfig {
                                     oidcUser.getEmail()
                             );
 
-                            response.setContentType("text/plain;charset=UTF-8");
-                            response.getWriter().write("구글 로그인 성공, 회원 ID: "+member.getId());
+                            LoginResponse tokens = tokenService.issue(member);
+
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setHeader("Cache-Control", "no-store");
+                            response.getWriter().write(
+                                    """
+                                    {
+                                      "accessToken": "%s",
+                                      "refreshToken": "%s"
+                                    }
+                                    """.formatted(
+                                            tokens.accessToken(),
+                                            tokens.refreshToken()
+                                    )
+                            );
                         }))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
