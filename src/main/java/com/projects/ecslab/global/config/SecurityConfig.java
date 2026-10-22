@@ -1,5 +1,6 @@
 package com.projects.ecslab.global.config;
 
+import com.projects.ecslab.global.dto.BaseResponse;
 import com.projects.ecslab.global.dto.ResponseCode;
 import com.projects.ecslab.global.exception.BusinessException;
 import com.projects.ecslab.global.jwt.JwtAuthenticationFilter;
@@ -29,6 +30,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import tools.jackson.databind.json.JsonMapper;
 
 @Configuration
 @EnableMethodSecurity
@@ -69,7 +71,8 @@ public class SecurityConfig {
             @Qualifier("handlerExceptionResolver")
             HandlerExceptionResolver exceptionResolver,
             SocialMemberService socialMemberService,
-            TokenService tokenService
+            TokenService tokenService,
+            JsonMapper jsonMapper
     ) throws Exception{
         http
                 .csrf(csrf -> csrf.disable())
@@ -111,18 +114,13 @@ public class SecurityConfig {
 
                             LoginResponse tokens = tokenService.issue(member);
 
+                            response.setStatus(ResponseCode.LOGIN_SUCCESS.httpStatus().value());
                             response.setContentType("application/json;charset=UTF-8");
                             response.setHeader("Cache-Control", "no-store");
-                            response.getWriter().write(
-                                    """
-                                    {
-                                      "accessToken": "%s",
-                                      "refreshToken": "%s"
-                                    }
-                                    """.formatted(
-                                            tokens.accessToken(),
-                                            tokens.refreshToken()
-                                    )
+
+                            jsonMapper.writeValue(
+                                    response.getWriter(),
+                                    BaseResponse.success(ResponseCode.LOGIN_SUCCESS, tokens)
                             );
                         }))
                 .sessionManagement(session -> session
