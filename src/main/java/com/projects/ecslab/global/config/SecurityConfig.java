@@ -1,10 +1,16 @@
 package com.projects.ecslab.global.config;
 
+import com.projects.ecslab.global.dto.BaseResponse;
 import com.projects.ecslab.global.dto.ResponseCode;
 import com.projects.ecslab.global.exception.BusinessException;
 import com.projects.ecslab.global.jwt.JwtAuthenticationFilter;
 import com.projects.ecslab.global.jwt.JwtTokenProvider;
+import com.projects.ecslab.member.dto.AuthProvider;
+import com.projects.ecslab.member.dto.LoginResponse;
+import com.projects.ecslab.member.entity.Member;
 import com.projects.ecslab.member.repository.MemberRepository;
+import com.projects.ecslab.member.service.SocialMemberService;
+import com.projects.ecslab.member.service.TokenService;
 import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -20,9 +26,11 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import tools.jackson.databind.json.JsonMapper;
 
 @Configuration
 @EnableMethodSecurity
@@ -61,7 +69,10 @@ public class SecurityConfig {
             JwtTokenProvider jwtTokenProvider,
             MemberRepository memberRepository,
             @Qualifier("handlerExceptionResolver")
-            HandlerExceptionResolver exceptionResolver
+            HandlerExceptionResolver exceptionResolver,
+            SocialMemberService socialMemberService,
+            TokenService tokenService,
+            JsonMapper jsonMapper
     ) throws Exception{
         http
                 .csrf(csrf -> csrf.disable())
@@ -78,6 +89,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/public").permitAll()
                         .requestMatchers("/api/member").authenticated()
                         .requestMatchers("/api/admin").hasRole("ADMIN")
+                        .requestMatchers("/oauth2/**", "/login/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
@@ -90,6 +102,27 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler((request, response, authentication) -> {
+                            OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
+
+                            Member member = socialMemberService.findOrCreate(
+                                    AuthProvider.GOOGLE,
+                                    oidcUser.getSubject(),
+                                    oidcUser.getEmail()
+                            );
+
+                            LoginResponse tokens = tokenService.issue(member);
+
+                            response.setStatus(ResponseCode.LOGIN_SUCCESS.httpStatus().value());
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setHeader("Cache-Control", "no-store");
+
+                            jsonMapper.writeValue(
+                                    response.getWriter(),
+                                    BaseResponse.success(ResponseCode.LOGIN_SUCCESS, tokens)
+                            );
+                        }))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
