@@ -5,8 +5,6 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-
 @Component
 public class SocialUserInfoExtractor {
 
@@ -14,38 +12,25 @@ public class SocialUserInfoExtractor {
             String registrationId,
             OAuth2User oauthUser
     ) {
-        if ("google".equals(registrationId)) {
-            OidcUser oidcUser = (OidcUser) oauthUser;
+        AuthProvider provider = switch (registrationId) {
+            case "google" -> AuthProvider.GOOGLE;
+            case "naver" -> AuthProvider.NAVER;
+            case "kakao" -> AuthProvider.KAKAO;
+            default -> throw new IllegalStateException(
+                    "지원하지 않는 로그인 제공자입니다: " + registrationId
+            );
+        };
 
-            return new SocialUserInfo(
-                    AuthProvider.GOOGLE,
-                    oidcUser.getSubject(),
-                    oidcUser.getEmail()
+        if (!(oauthUser instanceof OidcUser oidcUser)) {
+            throw new IllegalStateException(
+                    "OIDC 사용자 정보가 아닙니다."
             );
         }
 
-        if ("naver".equals(registrationId)) {
-            OidcUser oidcUser = (OidcUser) oauthUser;
-
-            return new SocialUserInfo(
-                    AuthProvider.NAVER,
-                    oidcUser.getSubject(),
-                    oidcUser.getEmail()
-            );
-        }
-
-        if ("kakao".equals(registrationId)) {
-            OidcUser oidcUser = (OidcUser) oauthUser;
-
-            return new SocialUserInfo(
-                    AuthProvider.KAKAO,
-                    oidcUser.getSubject(),
-                    oidcUser.getEmail()
-            );
-        }
-
-        throw new IllegalStateException(
-                "지원하지 않는 로그인 제공자입니다: " + registrationId
+        return new SocialUserInfo(
+                provider,
+                oidcUser.getSubject(),
+                oidcUser.getEmail()
         );
     }
 }
