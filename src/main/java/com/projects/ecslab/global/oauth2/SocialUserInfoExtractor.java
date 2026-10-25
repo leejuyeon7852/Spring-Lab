@@ -25,20 +25,12 @@ public class SocialUserInfoExtractor {
         }
 
         if ("naver".equals(registrationId)) {
-            Map<String, Object> naverResponse = oauthUser.getAttribute("response");
-
-            if (naverResponse == null
-                    || !(naverResponse.get("id") instanceof String naverId)
-                    || naverId.isBlank()) {
-                throw new IllegalStateException(
-                        "네이버 회원 식별자가 없습니다."
-                );
-            }
+            OidcUser oidcUser = (OidcUser) oauthUser;
 
             return new SocialUserInfo(
                     AuthProvider.NAVER,
-                    naverId,
-                    (String) naverResponse.get("email")
+                    oidcUser.getSubject(),
+                    oidcUser.getEmail()
             );
         }
 
