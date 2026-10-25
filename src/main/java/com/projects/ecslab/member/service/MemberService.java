@@ -109,4 +109,12 @@ public class MemberService {
         refreshTokenRepository.deleteByMember_Id(memberId);
     }
 
+    @Transactional(readOnly = true)
+    public MyInfoResponse getMyInfo(Long memberId){
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ResponseCode.TOKEN_MEMBER_NOT_FOUND));
+
+        return MyInfoResponse.from(member);
+    }
+
 }
