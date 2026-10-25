@@ -60,4 +60,10 @@ public class Member {
         this.providerId = providerId;
         this.role = Role.USER;
     }
+
+    public void fillEmailIfAbsent(String email){
+        if((this.email == null || this.email.isBlank()) && email != null && !email.isBlank()){
+            this.email = email;
+        }
+    }
 }
