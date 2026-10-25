@@ -44,6 +44,7 @@ spring:
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             client-name: Kakao
             scope:
+              - openid
               - account_email
 
         provider:
@@ -54,10 +55,7 @@ spring:
             user-name-attribute: response
 
           kakao:
-            authorization-uri: https://kauth.kakao.com/oauth/authorize
-            token-uri: https://kauth.kakao.com/oauth/token
-            user-info-uri: https://kapi.kakao.com/v2/user/me
-            user-name-attribute: id
+            issuer-uri: https://kauth.kakao.com
 
 jwt:
   secret: ${JWT_SECRET}

@@ -43,21 +43,12 @@ public class SocialUserInfoExtractor {
         }
 
         if ("kakao".equals(registrationId)) {
-            Object kakaoId = oauthUser.getAttribute("id");
-            Map<String, Object> kakaoAccount = oauthUser.getAttribute("kakao_account");
-
-            String email = kakaoAccount == null ? null : (String) kakaoAccount.get("email");
-
-            if (!(kakaoId instanceof Number)) {
-                throw new IllegalStateException(
-                        "카카오 회원 식별자가 없거나 올바르지 않습니다."
-                );
-            }
+            OidcUser oidcUser = (OidcUser) oauthUser;
 
             return new SocialUserInfo(
                     AuthProvider.KAKAO,
-                    kakaoId.toString(),
-                    email
+                    oidcUser.getSubject(),
+                    oidcUser.getEmail()
             );
         }
 
