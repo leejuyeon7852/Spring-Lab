@@ -52,6 +52,10 @@ public enum ResponseCode {
             HttpStatus.OK,
             "관리자 메시지를 조회했습니다."
     ),
+    MY_INFO_FETCHED(
+            HttpStatus.OK,
+            "내 정보를 조회했습니다."
+    ),
     INVALID_REQUEST(
             HttpStatus.BAD_REQUEST,
             "잘못된 요청입니다."),

@@ -72,4 +72,15 @@ public class MemberController {
                         ResponseCode.ADMIN_MESSAGE_FETCHED, response
                 ));
     }
+
+    @GetMapping("/my")
+    public ResponseEntity<BaseResponse<MyInfoResponse>> getMyInfo(@AuthenticationPrincipal Long memberId){
+        MyInfoResponse response = memberService.getMyInfo(memberId);
+
+        return ResponseEntity
+                .status(ResponseCode.MY_INFO_FETCHED.httpStatus())
+                .body(BaseResponse.success(
+                        ResponseCode.MY_INFO_FETCHED, response
+                ));
+    }
 }
