@@ -19,9 +19,14 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableMethodSecurity
@@ -61,7 +66,8 @@ public class SecurityConfig {
             MemberRepository memberRepository,
             @Qualifier("handlerExceptionResolver")
             HandlerExceptionResolver exceptionResolver,
-            OAuth2LoginSuccessHandler oauth2LoginSuccessHandler
+            OAuth2LoginSuccessHandler oauth2LoginSuccessHandler,
+            OidcUserService oidcUserService
     ) throws Exception{
         http
                 .csrf(csrf -> csrf.disable())
@@ -101,6 +107,9 @@ public class SecurityConfig {
                                         new BusinessException(ResponseCode.SOCIAL_LOGIN_FAILED)
                                 )
                         )
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .oidcUserService(oidcUserService)
+                        )
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -126,4 +135,40 @@ public class SecurityConfig {
         return http.build();
     }
 
+    @Bean
+    public OidcUserService oidcUserService() {
+        DefaultOAuth2UserService profileService = new DefaultOAuth2UserService();
+
+        profileService.setAttributesConverter(userRequest -> attributes -> {
+            String registrationId = userRequest.getClientRegistration()
+                    .getRegistrationId();
+
+            if (!"naver".equals(registrationId)) {
+                return attributes;
+            }
+
+            Object response = attributes.get("response");
+
+            if (!(response instanceof Map<?, ?> profile)
+                    || !(profile.get("id") instanceof String id)
+                    || id.isBlank()) {
+                throw new IllegalArgumentException(
+                        "네이버 프로필 식별자가 없습니다."
+                );
+            }
+
+            Map<String, Object> converted = new HashMap<>();
+            converted.put("sub", id);
+
+            if (profile.get("email") instanceof String email) {
+                converted.put("email", email);
+            }
+
+            return converted;
+        });
+
+        OidcUserService service = new OidcUserService();
+        service.setOauth2UserService(profileService);
+        return service;
+    }
 }
