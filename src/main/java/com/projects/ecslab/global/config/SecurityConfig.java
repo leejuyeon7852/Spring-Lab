@@ -93,15 +93,14 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oauth2LoginSuccessHandler)
-                        .failureHandler((request, response, exception) -> {
-                            System.err.println(
-                                    "OAuth2 로그인 실패: " + exception.getMessage()
-                            );
-
-                            response.setStatus(401);
-                            response.setContentType("text/plain;charset=UTF-8");
-                            response.getWriter().write("소셜 로그인에 실패했습니다.");
-                        })
+                        .failureHandler((request, response, exception) ->
+                                exceptionResolver.resolveException(
+                                        request,
+                                        response,
+                                        null,
+                                        new BusinessException(ResponseCode.SOCIAL_LOGIN_FAILED)
+                                )
+                        )
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
