@@ -1,17 +1,11 @@
 package com.projects.ecslab.global.config;
 
-import com.projects.ecslab.global.dto.BaseResponse;
 import com.projects.ecslab.global.dto.ResponseCode;
 import com.projects.ecslab.global.exception.BusinessException;
 import com.projects.ecslab.global.jwt.JwtAuthenticationFilter;
 import com.projects.ecslab.global.jwt.JwtTokenProvider;
-import com.projects.ecslab.member.dto.AuthProvider;
-import com.projects.ecslab.member.dto.LoginResponse;
-import com.projects.ecslab.member.entity.Member;
+import com.projects.ecslab.global.oauth2.OAuth2LoginSuccessHandler;
 import com.projects.ecslab.member.repository.MemberRepository;
-import com.projects.ecslab.member.service.SocialMemberService;
-import com.projects.ecslab.member.service.TokenService;
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,22 +13,15 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
-import tools.jackson.databind.json.JsonMapper;
-
-import java.util.Map;
 
 @Configuration
 @EnableMethodSecurity
@@ -74,9 +61,7 @@ public class SecurityConfig {
             MemberRepository memberRepository,
             @Qualifier("handlerExceptionResolver")
             HandlerExceptionResolver exceptionResolver,
-            SocialMemberService socialMemberService,
-            TokenService tokenService,
-            JsonMapper jsonMapper
+            OAuth2LoginSuccessHandler oauth2LoginSuccessHandler
     ) throws Exception{
         http
                 .csrf(csrf -> csrf.disable())
@@ -107,55 +92,8 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
                 .oauth2Login(oauth2 -> oauth2
-                        .successHandler((request, response, authentication) -> {
-                            OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
-                            String registrationId = oauthToken.getAuthorizedClientRegistrationId();
-                            OAuth2User oauthUser = oauthToken.getPrincipal();
-
-                            AuthProvider provider;
-                            String providerId;
-                            String email;
-
-                            if("google".equals(registrationId)){
-                                OidcUser oidcUser = (OidcUser) oauthUser;
-
-                                provider = AuthProvider.GOOGLE;
-                                providerId = oidcUser.getSubject();
-                                email = oidcUser.getEmail();
-                            } else if("naver".equals(registrationId)){
-                                Map<String, Object> naverResponse = oauthUser.getAttribute("response");
-
-                                if(naverResponse == null || !(naverResponse.get("id") instanceof String naverId)
-                                        || naverId.isBlank()){
-                                    throw new IllegalStateException("네이버 회원 식별자가 없습니다.");
-                                }
-
-                                provider = AuthProvider.NAVER;
-                                providerId = naverId;
-                                email = (String) naverResponse.get("email");
-                            } else{
-                                throw new IllegalStateException(
-                                        "지원하지 않는 로그인 제공자입니다: "+registrationId
-                                );
-                            }
-
-                            Member member = socialMemberService.findOrCreate(
-                                    provider,
-                                    providerId,
-                                    email
-                            );
-
-                            LoginResponse tokens = tokenService.issue(member);
-
-                            response.setStatus(ResponseCode.LOGIN_SUCCESS.httpStatus().value());
-                            response.setContentType("application/json;charset=UTF-8");
-                            response.setHeader("Cache-Control", "no-store");
-
-                            jsonMapper.writeValue(
-                                    response.getWriter(),
-                                    BaseResponse.success(ResponseCode.LOGIN_SUCCESS, tokens)
-                            );
-                        }))
+                        .successHandler(oauth2LoginSuccessHandler)
+                )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
