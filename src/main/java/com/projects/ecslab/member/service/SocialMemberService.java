@@ -19,7 +19,7 @@ public class SocialMemberService {
             String providerId,
             String email
     ) {
-        return memberRepository
+        Member member =  memberRepository
                 .findByProviderAndProviderId(provider, providerId)
                 .orElseGet(() -> memberRepository.save(
                         Member.builder()
@@ -28,5 +28,8 @@ public class SocialMemberService {
                                 .email(email)
                                 .build()
                 ));
+        member.fillEmailIfAbsent(email);
+
+        return member;
     }
 }

@@ -40,6 +40,10 @@ public enum ResponseCode {
             HttpStatus.OK,
             "로그아웃되었습니다."
     ),
+    SOCIAL_LOGIN_FAILED(
+            HttpStatus.UNAUTHORIZED,
+            "소셜 로그인에 실패했습니다."
+    ),
     AUTHENTICATION_REQUIRED(
             HttpStatus.UNAUTHORIZED,
             "인증이 필요합니다."

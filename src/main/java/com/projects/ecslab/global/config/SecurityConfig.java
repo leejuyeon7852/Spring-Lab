@@ -93,6 +93,14 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oauth2LoginSuccessHandler)
+                        .failureHandler((request, response, exception) ->
+                                exceptionResolver.resolveException(
+                                        request,
+                                        response,
+                                        null,
+                                        new BusinessException(ResponseCode.SOCIAL_LOGIN_FAILED)
+                                )
+                        )
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

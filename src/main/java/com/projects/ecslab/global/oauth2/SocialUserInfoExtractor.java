@@ -25,8 +25,7 @@ public class SocialUserInfoExtractor {
         }
 
         if ("naver".equals(registrationId)) {
-            Map<String, Object> naverResponse =
-                    oauthUser.getAttribute("response");
+            Map<String, Object> naverResponse = oauthUser.getAttribute("response");
 
             if (naverResponse == null
                     || !(naverResponse.get("id") instanceof String naverId)
@@ -40,6 +39,25 @@ public class SocialUserInfoExtractor {
                     AuthProvider.NAVER,
                     naverId,
                     (String) naverResponse.get("email")
+            );
+        }
+
+        if ("kakao".equals(registrationId)) {
+            Object kakaoId = oauthUser.getAttribute("id");
+            Map<String, Object> kakaoAccount = oauthUser.getAttribute("kakao_account");
+
+            String email = kakaoAccount == null ? null : (String) kakaoAccount.get("email");
+
+            if (!(kakaoId instanceof Number)) {
+                throw new IllegalStateException(
+                        "카카오 회원 식별자가 없거나 올바르지 않습니다."
+                );
+            }
+
+            return new SocialUserInfo(
+                    AuthProvider.KAKAO,
+                    kakaoId.toString(),
+                    email
             );
         }
 
